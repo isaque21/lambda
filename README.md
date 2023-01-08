@@ -14,4 +14,4 @@ To get started with Lambda, use the Lambda console to create a function. In a fe
 
 ## Functions
 
-- [Start/Stop EC2 routines](/lambda/start-stop-routines/)
+- [Start/Stop EC2 routines](https://github.com/isaque21/lambda/tree/main/start-stop-routines)
