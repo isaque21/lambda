@@ -1,4 +1,4 @@
-# Start/Stop EC2 periodically
+# Start/Stop EC2 periodically and Enable/Disable CloudWatch alarms
 
 This function allows you to create startup/stop routines for EC2 Instances on different days and times and enable/disable CloudWatch alarms corresponding to the Instance that suffered the action.
 
