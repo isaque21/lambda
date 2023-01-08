@@ -33,7 +33,7 @@ The period starts on Sunday and ends on Saturday.
 
     - Scheduled: Active
 
-    - Period-1: Monday to Friday
+    - Period-1: Monday-Friday
     - ScheduleStart-1: 06:00
     - ScheduleStop-1: 18:00
 
