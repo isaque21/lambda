@@ -27,7 +27,10 @@ A privileged IAM role will be required to start and stop EC2 Instances. An examp
 
 ## IMPORTANT!!!
 
-The period starts on Sunday and ends on Saturday.
+- The period starts on Sunday and ends on Saturday.
+- This function is configured to work with UTC-3 time.
+
+`current_time = datetime.now()-timedelta(hours=3)`
 
 ## Examples of EC2 instance tags
 
