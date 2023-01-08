@@ -10,10 +10,10 @@ A privileged IAM role will be required to start/stop EC2 Instances and manage Cl
 
 - First, you need to define the following tags with their keys and values on EC2 instances:
 
-    - 'Scheduled: Active';
-    - 'Period-1: Monday-Friday';
-    - 'ScheduleStart-1: 08:00';
-    - 'ScheduleStop-1: 18:00';
+    - Scheduled       : Active
+    - Period-1        : Monday-Friday
+    - ScheduleStart-1 : 08:00
+    - ScheduleStop-1  : 18:00
 
 ##
 
@@ -29,16 +29,16 @@ A privileged IAM role will be required to start/stop EC2 Instances and manage Cl
 
 The period starts on Sunday and ends on Saturday.
 
-## Examples of EC2 instance tags:
+## Examples of EC2 instance tags
 
-    - Scheduled: Active
+    Scheduled       : Active
 
-    - Period-1: Monday-Friday
-    - ScheduleStart-1: 06:00
-    - ScheduleStop-1: 18:00
+    Period-1        : Monday-Friday
+    ScheduleStart-1 : 06:00
+    ScheduleStop-1  : 18:00
 
-    - Period-2: Saturday
-    - ScheduleStart-2: 09:00
+    Period-2        : Saturday
+    ScheduleStart-2 : 09:00
 
-    - Period-3: Sunday
-    - ScheduleStop-3: 02:00
+    Period-3        : Sunday
+    ScheduleStop-3  : 02:00
