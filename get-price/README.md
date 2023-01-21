@@ -4,6 +4,8 @@ This script uses the AWS Pricing API to populate a CSV file with On-Demand and R
 
 # Instructions
 
+You can follow the step by step in [this post](https://dev.to/isaque21/gerando-relatorio-de-precos-de-reservas-de-instancias-via-lambda-4mjn).
+
 ## AWS resource region
 
 Choose the region where your instances are. If you have instances in more than one region, you will need to change the region and run the function again, generating a report for each region.
