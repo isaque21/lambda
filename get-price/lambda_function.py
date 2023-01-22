@@ -9,20 +9,20 @@ from botocore.exceptions import ClientError
 # Define AWS Region
 AWS_REGION = "us-east-1"
 
+# Define AWS Pricing Rregion (us-east-1 or ap-south-1)
+AWS_PRICING_REGION = 'us-east-1'
+
 # Define reservation type (standard or convertible)
 OFFERING_CLASS = 'standard'
 
-# Enter your BUCKET name, e.g 'Data'
+# Enter your bucket name, e.g 'mybucket'
 BUCKET = 'mybucket'
 
-# KEY path, e.g.'customer_profile/Reddit_Historical_Data.csv'
+# KEY path, e.g.'myec2report.csv'
 KEY = 'ec2_pricing_ri'
 
 # Download s3 csv file to lambda tmp folder
 LOCAL_FILE = '/tmp/report_tmp.csv'
-
-# Define AWS Pricing Rregion
-AWS_PRICING_REGION = 'us-east-1'
 
 # Get AWS Resources
 S3_RESOURCE = boto3.client('s3')
