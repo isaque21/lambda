@@ -49,7 +49,7 @@ If you saved the template CSV file under a different name, enter it here.
 
 ```
 # KEY path, e.g.'myec2report.csv'
-KEY = 'ec2_pricing_ri'
+KEY = 'ec2_recommendations'
 ```
 
 ## IMPORTANT!!!
