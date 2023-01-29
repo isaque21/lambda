@@ -4,7 +4,7 @@ This script uses the AWS Compute Optimizer and AWS Pricing API to populate a CSV
 
 # Instructions
 
-You can follow the step by step in [this post]().
+You can follow the step by step in [this post](https://dev.to/isaque21/gerando-relatorio-de-rightsizing-de-instancias-via-lambda-2nlb).
 
 ## AWS resource region
 
