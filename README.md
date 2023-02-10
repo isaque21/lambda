@@ -14,6 +14,7 @@ To get started with Lambda, use the Lambda console to create a function. In a fe
 
 ## Functions
 
-- [EC2 Start/Stop routines](https://github.com/isaque21/lambda/tree/main/start-stop-routines)
-- [EC2 Pricing Report](https://github.com/isaque21/lambda/tree/main/get-price)
-- [EC2 Rightsizing Report](https://github.com/isaque21/lambda/tree/main/get-recommendations)
+- [EBS - Check Volumes Snapshot](https://github.com/isaque21/lambda/tree/main/ebs-check-snapshots)
+- [EC2 - Start/Stop Routines](https://github.com/isaque21/lambda/tree/main/start-stop-routines)
+- [EC2 - Pricing Report](https://github.com/isaque21/lambda/tree/main/get-price)
+- [EC2 - Rightsizing Report](https://github.com/isaque21/lambda/tree/main/get-recommendations)
