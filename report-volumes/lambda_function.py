@@ -7,9 +7,7 @@ from botocore.exceptions import ClientError
 from datetime import datetime, timedelta
 
 REGIONS = ['sa-east-1', 'us-east-1']
-
 SNAPSHOT_DAYS = 1
-
 BUCKET_NAME = 'mybucket'
 CSV_FILE = 'myfile.csv'
 
@@ -19,8 +17,6 @@ def get_free_space(instance_id, ln, region):
     ssm = boto3.client('ssm', region_name=region)
     
     response = ssm.describe_instance_information(InstanceInformationFilterList=[{'key': 'InstanceIds', 'valueSet': [instance_id]}])
-    
-    print(response)
     
     if len(response['InstanceInformationList']) > 0:
         platform_type = response['InstanceInformationList'][0]['PlatformType']
