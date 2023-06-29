@@ -18,3 +18,4 @@ To get started with Lambda, use the Lambda console to create a function. In a fe
 - [EC2 - Start/Stop Routines](https://github.com/isaque21/lambda/tree/main/start-stop-routines)
 - [EC2 - Pricing Report](https://github.com/isaque21/lambda/tree/main/get-price)
 - [EC2 - Rightsizing Report](https://github.com/isaque21/lambda/tree/main/get-recommendations)
+- [RDS - Start/Stop Routine](https://github.com/isaque21/lambda/tree/main/start-stop-routines/start-stop-rds-period)

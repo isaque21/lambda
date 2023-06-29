@@ -11,8 +11,8 @@ You can follow the step by step in [this post](https://dev.to/isaque21/gerando-r
 Choose the region where your instances are. If you have instances in more than one region, you will need to change the region and run the function again, generating a report for each region.
 
 ```
-# Define AWS Region
-AWS_REGION = "us-east-1"
+# Define AWS Regions
+AWS_REGIONS = ['us-east-1', 'sa-east-1']
 
 ```
 
@@ -48,8 +48,8 @@ BUCKET = 'mybucket'
 If you saved the template CSV file under a different name, enter it here.
 
 ```
-# KEY path, e.g.'myec2report.csv'
-KEY = 'ec2_pricing_ri'
+# KEY path, e.g.'myec2report'
+KEY = 'myec2report'
 ```
 
 ## IMPORTANT!!!
