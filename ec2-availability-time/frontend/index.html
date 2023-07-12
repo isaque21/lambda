@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>EC2 Availability</title>
+  <link rel="stylesheet" type="text/css" href="assets/css/style.css">
+  <link rel="stylesheet" type="text/css" href="assets/css/bootstrap.min.css">
+</head>
+<body>
+  <header>
+    <div class="logo">
+      <!-- <img src="caminho-para-a-logo.png" alt="Logo da Empresa"> -->
+      <h1>EC2 Availability</h1>
+    </div>
+    <nav>
+      <ul>
+        <li><a href="#" id="charts">Charts</a></li>
+        <li><a href="#" id="tables">Tables</a></li>
+        <li><a id="download-csv" href="#" download="ec2-availability-report">Download</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <div class="main-div container-fluid">
+    <div class="top-bar row">
+        <div class="col-md-12">
+          <label for="period-month">Period:</label> <select id="period-month"></select>
+      </div> 
+    </div>
+      
+      <div id="main-charts" class="row"></div>
+
+      <div id="main-table" class="main-table row">
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th scope="col">#</th>
+              <th scope="col">Account</th>
+              <th scope="col">Region</th>
+              <th scope="col">Instance Name</th>
+              <th scope="col">Instance Id</th>
+              <th scope="col">Platform</th>
+              <th scope="col">Type</th>
+              <th scope="col">Uptime Hours</th>
+              <th scope="col">Downtime Hours</th>
+              <th scope="col">Percentage</th>
+              <th scope="col">Hours Used</th>
+              <th scope="col">Start Date</th>
+              <th scope="col">End Date</th>
+            </tr>
+          </thead>
+          <tbody id="availability-table">
+          </tbody>
+        </table>
+      </div>
+  </div>
+
+ 
+  <script src="assets/js/bootstrap.min.js"></script>
+  <script src="assets/js/jquery.js"></script>
+  <script src="assets/js/papaparse.min.js"></script>
+  <script src="assets/js/chart.min.js"></script>
+  <script src="assets/js/script.js"></script>
+
+</body>
+</html>
+
+
+
+
+

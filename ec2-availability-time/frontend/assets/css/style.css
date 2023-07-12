@@ -1,0 +1,141 @@
+/* Estilos gerais */
+body {
+    margin: 0;
+    padding: 0;
+  }
+  
+ /* Estilos do cabeçalho */
+header {
+    background-color: #f2f2f2;
+    padding: 20px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+header h1 {
+  font-size: xx-large;
+  font-weight: 700;
+}
+  
+  .logo img {
+    height: 50px;
+  }
+  
+  nav ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+  }
+  
+  nav li {
+    margin-left: 10px;
+  }
+  
+  nav a {
+    text-decoration: none;
+    color: #333;
+    font-weight: bold;
+    padding: 5px 10px;
+    border-radius: 4px;
+  }
+  
+  nav a:hover {
+    background-color: #333;
+    color: #fff;
+  }
+  
+  nav ul {
+    margin-left: auto;
+  }
+
+  nav .logout {
+    color:#b44149;
+  }
+
+  nav .logout:hover {
+    background-color:#b44149;
+    color:#fff;
+  }
+
+.main-div {
+    /* display: flex; */
+    margin-bottom: 30px;
+  }
+
+.main-div .top-bar {
+  margin-bottom: 10px;
+}
+
+.main-div .main-table {
+  display: none;
+}
+  
+.div-chart {flex: 1;min-height: 200px;padding: 0 5px 5px 5px;border: 1px solid #f2f2f2;}
+
+.expanded {
+flex-grow: 1;
+}
+
+.chart-header {
+  padding: 5px;
+  font-weight: 600;
+  text-align: left;
+  background-color: #f2f2f2;
+}
+
+.chart-header span {
+  font-weight: 700;
+  text-align: left;
+}
+
+.chart-header span{
+  color: #333 ;
+}
+
+.chart-details {
+  padding-top: 10px;
+}
+
+.chart-details h4 {
+  font-size: small;
+  font-weight: 700;
+  text-align: right;
+  margin-bottom: 20px;
+}
+
+.chart-details p {
+  font-size: medium;
+  text-align: right;
+}
+
+.chart-details .percent {
+  font-weight: 600;
+  font-size: xx-large;
+  color: #000000;
+}
+
+.chart-details .uptime {
+  font-weight: 600;
+  font-size: large;
+  color: #17a23e;
+}
+
+.chart-details .downtime {
+  font-weight: 600;
+  font-size: large;
+  color: #b44149;
+}
+
+.login {
+  padding: 20px;
+  margin-top: 100px !important;
+  border: 1px solid #cccaca;
+  border-radius: 20px;
+}
+
+.login h2 {
+  text-align: center; 
+}
