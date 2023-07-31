@@ -57,8 +57,6 @@ def lambda_handler(event, context):
                     # Get Period tag value
                     if tag['Key'] == 'Scheduled':
                         scheduled = tag['Value']
-                    else:
-                        scheduled = 'False'
                 
                 print(f'Scheduled: {scheduled}')
                 
