@@ -48,14 +48,15 @@ def lambda_handler(event, context):
                 period = []
                 i = 0
                 j = 0
+                scheduled = 'Inactive'
+                
                 tags_response = rds.list_tags_for_resource(ResourceName=db_instance['DBInstanceArn'])
                 
                 tags = tags_response['TagList']
-
+                
                 for tag in tags:
                     
-                    # Get Period tag value
-                    if tag['Key'] == 'Scheduled':
+                    if 'Scheduled' in tag['Key']:
                         scheduled = tag['Value']
                 
                 print(f'Scheduled: {scheduled}')
@@ -63,7 +64,8 @@ def lambda_handler(event, context):
                 if scheduled == 'Active':
                     
                     for tag in tags:
-                                
+                        
+                        # Get Period tag value       
                         if 'Period' in tag['Key']:
                             period.append(tag['Key'].split('-')[1])
                             i = i+1
