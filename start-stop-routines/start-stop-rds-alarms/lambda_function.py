@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 
 # Define RDS client connection
 rds = boto3.client('rds')
+cloudwatch = boto3.client('cloudwatch')
 
 DAYS = [
     'Sunday',
@@ -14,6 +15,36 @@ DAYS = [
     'Friday',
     'Saturday'
 ]
+
+def manage_alarms(db_identifier, action):
+    
+    # List metrics through the pagination interface
+    paginator = cloudwatch.get_paginator('list_metrics')
+    print(f'Instance: {db_identifier}')
+    
+    for metrics in paginator.paginate(Dimensions=[{'Name': 'DBInstanceIdentifier','Value': db_identifier}]):
+        for metric in metrics['Metrics']:
+            # print(f'Metric: {metric}')
+            
+            alarms = cloudwatch.describe_alarms_for_metric(
+            MetricName = metric['MetricName'],
+            Namespace = metric['Namespace'],
+            Dimensions = metric['Dimensions']
+            )
+            
+            if alarms['MetricAlarms']:
+                for alarm in alarms['MetricAlarms']:
+                    alarmName = alarm['AlarmName']
+                    
+                    # print(f'Alarm: {alarmName}')
+                
+                    if action == 'disable':
+                        cloudwatch.disable_alarm_actions(AlarmNames=[alarmName])
+                        print(f'Alarm {alarmName} is disabled!')
+                    elif action == 'enable':
+                        cloudwatch.enable_alarm_actions(AlarmNames=[alarmName])
+                        print(f'Alarm {alarmName} is enabled!')
+
 
 def lambda_handler(event, context):
 
@@ -135,6 +166,8 @@ def lambda_handler(event, context):
         for stop_instance in stop_instances:
             response = rds.stop_db_instance(DBInstanceIdentifier=stop_instance)
             print(f'Stopping instance: {stop_instance}')
+
+            manage_alarms(stop_instance, 'disable')
     else:
         print("No instances to stop.")
         
@@ -143,5 +176,7 @@ def lambda_handler(event, context):
         for start_instance in start_instances:
             response = rds.start_db_instance(DBInstanceIdentifier=start_instance)
             print(f'Starting instance: {start_instance}')
+
+            manage_alarms(start_instance, 'enable')
     else:
         print("No instances to start.")
