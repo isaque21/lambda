@@ -69,8 +69,8 @@ def lambda_handler(event, context):
         v_read_replica.extend(readReplica)
 
     for db_instance in db_instances:
-        #The if condition below filters aurora clusters from single instance databases as boto3 commands defer to stop the aurora clusters.
-        if db_instance['Engine'] not in ['aurora-mysql','aurora-postgresql']:
+        #The if condition below filters out the aurora and documentdb clusters as the commands fail to stop the aurora and documentdb clusters.
+        if db_instance['Engine'] not in ['aurora-mysql','aurora-postgresql', 'docdb']:
             #The if condition below filters Read replicas.
             if db_instance['DBInstanceIdentifier'] not in v_read_replica and len(db_instance['ReadReplicaDBInstanceIdentifiers']) == 0:
 
