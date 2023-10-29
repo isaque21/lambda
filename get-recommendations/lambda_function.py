@@ -1,13 +1,14 @@
 import boto3
 import json
 import csv
+import io
 import time
 import logging
 from unicodedata import normalize
 from botocore.exceptions import ClientError
 
 # Define AWS Region
-AWS_REGION = "us-east-1"
+AWS_REGIONS = ['sa-east-1', 'us-east-1']
 
 # Define AWS Pricing Rregion (us-east-1 or ap-south-1)
 AWS_PRICING_REGION = 'us-east-1'
@@ -16,27 +17,27 @@ AWS_PRICING_REGION = 'us-east-1'
 OFFERING_CLASS = 'standard'
 
 # Enter your bucket name, e.g 'mybucket'
-BUCKET = 'ec2-princing-reports'
+BUCKET = 'mybucket'
 
 # KEY path, e.g.'myec2report'
-KEY = 'ec2_recommendations'
-
-# Download s3 csv file to lambda tmp folder
-LOCAL_FILE = '/tmp/report_tmp.csv'
+KEY = 'myec2report'
 
 # Get AWS Resources
 S3_RESOURCE = boto3.client('s3')
-EC2_RESOURCE = boto3.client('ec2', region_name=AWS_REGION)
-SSM_RESOURCE = boto3.client('ssm', region_name=AWS_REGION)
-COMPUTE_OPTIMIZER = boto3.client('compute-optimizer', region_name=AWS_REGION)
+SSM_RESOURCE = boto3.client('ssm')
 PRICING_RESOURCE = boto3.client('pricing', region_name=AWS_PRICING_REGION)
 
-# Get location name
-response = SSM_RESOURCE.get_parameter(Name='/aws/service/global-infrastructure/regions/'+AWS_REGION+'/longName')
-location = response['Parameter']['Value']
-location = normalize('NFKD', location).encode('ASCII','ignore').decode('ASCII')
+############## GET LOCATION NAME #########################################
 
-lists = []
+def get_location_name(AWS_REGION):
+
+    # Get the name of the location for the region using AWS Systems Manager Parameter Store
+    response_location = SSM_RESOURCE.get_parameter(Name='/aws/service/global-infrastructure/regions/'+AWS_REGION+'/longName')
+    location_name = response_location['Parameter']['Value']
+    location_name = normalize('NFKD', location_name).encode('ASCII','ignore').decode('ASCII')
+    
+    return location_name
+
 
 ############## GET THE INSTANCE PRICE TYPES #########################################
 def get_price(region, typeEc2, operatingSystem, preInstalledSw):
@@ -163,9 +164,13 @@ def get_price(region, typeEc2, operatingSystem, preInstalledSw):
 
 ############## GET RECOMENDATIONS ####################################
 
-def get_recommendations(arn, account, instance_id, platform):
+def get_recommendations(arn, account, instance_id, platform, region):
     
-    response = COMPUTE_OPTIMIZER.get_ec2_instance_recommendations(
+    print(arn, account, instance_id, platform, region)
+    
+    compute_optimizer = boto3.client('compute-optimizer', region_name=region)
+
+    response = compute_optimizer.get_ec2_instance_recommendations(
             instanceArns=[
                 arn,
             ],
@@ -173,7 +178,8 @@ def get_recommendations(arn, account, instance_id, platform):
                 account,
             ]
         )
-        
+
+    
     fiding = 'not available'
     oldType = 'not available'
     oldVcpuUtilization = 'not available'
@@ -188,10 +194,12 @@ def get_recommendations(arn, account, instance_id, platform):
         fiding = response['instanceRecommendations'][0]['finding']
         oldType = response['instanceRecommendations'][0]['currentInstanceType']
         
+        print(response['instanceRecommendations'][0]['utilizationMetrics'])
+        
         for oldMetric in response['instanceRecommendations'][0]['utilizationMetrics']:
             if oldMetric['name'] == 'CPU' and oldMetric['statistic'] == 'MAXIMUM':
                 oldVcpuUtilization = str(round(oldMetric['value'], 2)) + ' %'
-            elif oldMetric['name'] == 'Memory' and oldMetric['statistic'] == 'MAXIMUM':
+            elif oldMetric['name'] == 'MEMORY' and oldMetric['statistic'] == 'MAXIMUM':
                 oldMemoryUtilization = str(round(oldMetric['value'], 2)) + ' %'
         
         futureType = response['instanceRecommendations'][0]['recommendationOptions'][0]['instanceType']
@@ -206,104 +214,119 @@ def get_recommendations(arn, account, instance_id, platform):
     
     return recommendations
 
-############## CREATE BUCKET S3 #########################################
-def send_to_bucket(localFile, listValues, keyFile):
-    # Create BUCKET
-    try:
-        S3_RESOURCE.download_file(BUCKET, f'{keyFile}.csv', localFile)
-        for values in listValues:
-            # write the data into '/tmp' folder
-            with open(localFile,'r') as infile:
-                reader = list(csv.reader(infile))
-                reader = reader[::-1] # the date is ascending order in file
-                reader.insert(0,values)
-            
-            with open(localFile, 'w', newline='') as outfile:
-                writer = csv.writer(outfile)
-                for line in reversed(reader): # reverse order
-                    writer.writerow(line)
+############## CREATE CSV FILE IN S3 BUCKET #############################
+
+def send_to_bucket(data):
     
-        # get current timestamp
-        ts = time.time_ns()
-        
-        # upload file from tmp to s3 KEY
-        S3_RESOURCE.upload_file(localFile, BUCKET, f'{keyFile}_{OFFERING_CLASS}_{ts}.csv')
-    except ClientError as e:
-        logging.error(e)
-        return False
-    return True
+    headers = ['Account', 'Region', 'Instance_Name', 'Instance_ID', 'State', 'Plataform', 'Old_Type', 'Old_Memory', 'Old_Max_Memory', 'Old_vCPU', 'Old_Max_vCPU', 'Finding', 'New_Type', 'New_Memory', 'New_Max_Memory', 'New_vCPU', 'New_Max_vCPU', 'OnDemand_Monthly', 'No_Upfront_Monthly_1yr', 'Partial_Upfront_Initial_1yr', 'Partial_Upfront_Monthly_1yr', 'All_Upfront_1yr', 'No_Upfront_Monthly_3yr', 'Partial_Upfront_Initial_3yr', 'Partial_Upfront_Monthly_3yr', 'All_Upfront_3yr']
+    row = data
+
+    csv_buffer = io.StringIO()
+    writer = csv.writer(csv_buffer, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+
+    # Write headers to the CSV file
+    writer.writerow(headers)
+
+    # Write each row of data to the CSV file
+    for row in data:
+        writer.writerow(row)
+
+    # Get the CSV content as bytes encoded in UTF-8
+    csv_bytes = csv_buffer.getvalue().encode('utf-8')
+
+    # get current timestamp
+    ts = time.time_ns()
+
+    # Upload the CSV file to the S3 bucket with a unique key based on the timestamp and offering class
+    S3_RESOURCE.put_object(Body=csv_bytes, Bucket=BUCKET, Key=f'{KEY}_{OFFERING_CLASS}_{ts}.csv')
 
 
 ############## handle_function #######################################
 
 def lambda_handler(event, context):
 
-    # Get Instances attributes
-    instances = EC2_RESOURCE.describe_instances()
+    lists = []
 
-    for instance in instances['Reservations']:
+    # Iterate over each region
+    for region in AWS_REGIONS:
+        
+        # Create an EC2 client for the region
+        ec2 = boto3.client('ec2', region_name=region)
 
-        ec2Owner = instance['OwnerId']
-        ec2Az = instance['Instances'][0]['Placement']['AvailabilityZone']
-        
-        ec2Name = '-'
-        if 'Tags' in instance['Instances'][0]:
-            for tag in instance['Instances'][0]['Tags']:
-                if tag['Key'] == 'Name':
-                    ec2Name = tag['Value']
+        # Get Instances attributes
+        instances = ec2.describe_instances()
 
-        ec2Id = instance['Instances'][0]['InstanceId']      
-        ec2Platform = instance['Instances'][0]['PlatformDetails']
-        ec2Type = instance['Instances'][0]['InstanceType']
-    
-        types = EC2_RESOURCE.describe_instance_types(
-            InstanceTypes=[
-                ec2Type,
-            ]
-        )
-        
-        for typeEc2 in types['InstanceTypes']:
-            ec2Memory = typeEc2['MemoryInfo']['SizeInMiB']
-            ec2Vcpu = typeEc2['VCpuInfo']['DefaultVCpus']
-        
-        ec2Memory = str(round(ec2Memory/1024, 3)) + ' GiB'
+        # Check if there are reservations
+        if len(instances['Reservations']) > 0:
+
+            for instance in instances['Reservations']:
+
+                ec2Owner = instance['OwnerId']
+                ec2Az = instance['Instances'][0]['Placement']['AvailabilityZone']
+                
+                ec2Name = '-'
+                if 'Tags' in instance['Instances'][0]:
+                    for tag in instance['Instances'][0]['Tags']:
+                        if tag['Key'] == 'Name':
+                            ec2Name = tag['Value']
+
+                ec2Id = instance['Instances'][0]['InstanceId']      
+                ec2Platform = instance['Instances'][0]['PlatformDetails']
+                ec2State = instance['Instances'][0]['State']['Name']
+                ec2Type = instance['Instances'][0]['InstanceType']
+                
+                types = ec2.describe_instance_types(
+                    InstanceTypes=[
+                        ec2Type,
+                    ]
+                )
+
+                
+                for typeEc2 in types['InstanceTypes']:
+                    ec2Memory = typeEc2['MemoryInfo']['SizeInMiB']
+                    ec2Vcpu = typeEc2['VCpuInfo']['DefaultVCpus']
+                
+                ec2Memory = str(round(ec2Memory/1024, 3)) + ' GiB'
+                    
+                if 'SQL Server Standard' in ec2Platform:
+                    preInstalledSw = 'SQL Std'
+                elif 'SQL Server Enterprise' in ec2Platform:
+                    preInstalledSw = 'SQL Ent'
+                elif 'SQL Server Web' in ec2Platform:
+                    preInstalledSw = 'SQL Web'
+                else:
+                    preInstalledSw = 'NA'
+
+                if ec2Platform == 'Red Hat Enterprise Linux':
+                    platform = 'RHEL'
+                elif ec2Platform == 'Linux/UNIX':
+                    platform = 'Linux'
+                elif ec2Platform == 'SUSE Linux':
+                    platform = 'SUSE'
+                elif 'Windows' in ec2Platform:
+                    platform = 'Windows'
+                else:
+                    platform = ec2Platform
+
+                # Get region location name
+                location = get_location_name(region)
+
+                # get recomendations
+                ec2Arn = 'arn:aws:ec2:'+region+':'+instance['OwnerId']+':instance/'+instance['Instances'][0]['InstanceId']
+                instanceIdFuture, platformFuture, oldType, oldMemoryUtilization, oldVcpuUtilization, fiding, typeFuture, memoryUtilizationFuture, vcpuUtilizationFuture = get_recommendations(ec2Arn, ec2Owner, ec2Id, platform, region)
+                
+                # get price for recommendations
+                if typeFuture == 'not available':
+                    typeNew=memNew=vcpuNew=priceOnDemandNew=noUpfront1yrNew=partUpfront1yrNew=partHrsUpfront1yrNew=allUpfront1yrNew=noUpfront3yrNew=partUpfront3yrNew=partHrsUpfront3yrNew=allUpfront3yrNew='not available'
             
-        if 'SQL Server Standard' in ec2Platform:
-            preInstalledSw = 'SQL Std'
-        elif 'SQL Server Enterprise' in ec2Platform:
-            preInstalledSw = 'SQL Ent'
-        elif 'SQL Server Web' in ec2Platform:
-            preInstalledSw = 'SQL Web'
-        else:
-            preInstalledSw = 'NA'
-
-        if ec2Platform == 'Red Hat Enterprise Linux':
-            platform = 'RHEL'
-        elif ec2Platform == 'Linux/UNIX':
-            platform = 'Linux'
-        elif ec2Platform == 'SUSE Linux':
-            platform = 'SUSE'
-        elif 'Windows' in ec2Platform:
-            platform = 'Windows'
-        else:
-            platform = ec2Platform
-
-        # get recomendations
-        ec2Arn = 'arn:aws:ec2:'+AWS_REGION+':'+instance['OwnerId']+':instance/'+instance['Instances'][0]['InstanceId']
-        instanceIdFuture, platformFuture, oldType, oldMemoryUtilization, oldVcpuUtilization, fiding, typeFuture, memoryUtilizationFuture, vcpuUtilizationFuture = get_recommendations(ec2Arn, ec2Owner, ec2Id, platform)
-        
-        # get price for recommendations
-        if typeFuture == 'not available':
-            typeNew=memNew=vcpuNew=priceOnDemandNew=noUpfront1yrNew=partUpfront1yrNew=partHrsUpfront1yrNew=allUpfront1yrNew=noUpfront3yrNew=partUpfront3yrNew=partHrsUpfront3yrNew=allUpfront3yrNew='not available'
-       
-        else:
-            typeNew, memNew, vcpuNew, priceOnDemandNew, noUpfront1yrNew, partUpfront1yrNew, partHrsUpfront1yrNew, allUpfront1yrNew, noUpfront3yrNew, partUpfront3yrNew, partHrsUpfront3yrNew, allUpfront3yrNew = get_price(location, typeFuture, platformFuture, preInstalledSw)
-       
-        listArrRec = [ec2Owner,ec2Az,ec2Name,instanceIdFuture,platformFuture,oldType,ec2Memory,oldMemoryUtilization,ec2Vcpu,oldVcpuUtilization,fiding,typeNew,memNew,memoryUtilizationFuture,vcpuNew,vcpuUtilizationFuture,priceOnDemandNew,noUpfront1yrNew,partUpfront1yrNew,partHrsUpfront1yrNew,allUpfront1yrNew,noUpfront3yrNew,partUpfront3yrNew,partHrsUpfront3yrNew,allUpfront3yrNew]
-        lists.append(listArrRec)
+                else:
+                    typeNew, memNew, vcpuNew, priceOnDemandNew, noUpfront1yrNew, partUpfront1yrNew, partHrsUpfront1yrNew, allUpfront1yrNew, noUpfront3yrNew, partUpfront3yrNew, partHrsUpfront3yrNew, allUpfront3yrNew = get_price(location, typeFuture, platformFuture, preInstalledSw)
+            
+                listArrRec = [ec2Owner,ec2Az,ec2Name,instanceIdFuture,ec2State,platformFuture,ec2Type,ec2Memory,oldMemoryUtilization,ec2Vcpu,oldVcpuUtilization,fiding,typeNew,memNew,memoryUtilizationFuture,vcpuNew,vcpuUtilizationFuture,priceOnDemandNew,noUpfront1yrNew,partUpfront1yrNew,partHrsUpfront1yrNew,allUpfront1yrNew,noUpfront3yrNew,partUpfront3yrNew,partHrsUpfront3yrNew,allUpfront3yrNew]
+                lists.append(listArrRec)
 
     # send csv files to S3
-    send_to_bucket(LOCAL_FILE, lists, KEY)
+    send_to_bucket(lists)
     
     return{
         'message':'success'
