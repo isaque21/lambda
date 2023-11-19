@@ -118,8 +118,8 @@ def lambda_handler(event, context):
                                 if len(day) > 1:
                                     
                                     # Check if the current day is within the period
-                                    if DAYS.index(current_day, DAYS.index(day[0]), DAYS.index(day[1]) + 1):
-                                        print(f'{current_day} is on Stop period-{period[j]}')
+                                    if DAYS.index(current_day) in range(DAYS.index(day[0]), DAYS.index(day[1])):
+                                        print(f'{current_day} is on Stop Period-{period[j]}')
                                         
                                         if tag['Value'] == current_time_local:
                                             print(f'{db_instance["DBInstanceIdentifier"]} is on the Stop time')
@@ -130,7 +130,7 @@ def lambda_handler(event, context):
                                                 print(f'{db_instance["DBInstanceIdentifier"]} state is: {db_instance["DBInstanceStatus"]}')
                                                 
                                     else:
-                                        print(f'{current_day} is not on Stop period-{period[j]}')
+                                        print(f'{current_day} is not on Stop Period-{period[j]}')
                                 else:
 
                                     # Checks if the period has a sigle day
@@ -144,7 +144,7 @@ def lambda_handler(event, context):
                                                     print(f'{db_instance["DBInstanceIdentifier"]} state is: {db_instance["DBInstanceStatus"]}')
                                                     
                                     else:
-                                        print(f'{current_day} is not on Stop period-{period[j]}')
+                                        print(f'{current_day} is not on Stop Period-{period[j]}')
 
                         # Add instance in array to start
                         for tag in tags:
@@ -152,8 +152,8 @@ def lambda_handler(event, context):
                                     
                                 if len(day) > 1:
                                     # Check if the current day is within the period
-                                    if DAYS.index(current_day, DAYS.index(day[0]), DAYS.index(day[1]) + 1):
-                                        print(f'{current_day} is on Start period-{period[j]}')
+                                    if DAYS.index(current_day) in range(DAYS.index(day[0]), DAYS.index(day[1])):
+                                        print(f'{current_day} is on Start Period-{period[j]}')
                                         
                                         if tag['Value'] == current_time_local:
                                             print(f'{db_instance["DBInstanceIdentifier"]} is on the Start time')
@@ -163,7 +163,7 @@ def lambda_handler(event, context):
                                             else:
                                                 print(f'{db_instance["DBInstanceIdentifier"]} state is: {db_instance["DBInstanceStatus"]}')
                                     else:        
-                                        print(f'{current_day} is not on Start period-{period[j]}')
+                                        print(f'{current_day} is not on Start Period-{period[j]}')
                                 else:
 
                                     # Checks if the period has a sigle day
@@ -175,7 +175,7 @@ def lambda_handler(event, context):
                                             else:
                                                 print(f'{db_instance["DBInstanceIdentifier"]} state is: {db_instance["DBInstanceStatus"]}')
                                     else:        
-                                        print(f'{current_day} is not on Start period-{period[j]}')
+                                        print(f'{current_day} is not on Start Period-{period[j]}')
                         j = j+1
             
     # Stop all instances tagged to stop.
