@@ -42,76 +42,87 @@ def lambda_handler(event, context):
 
     # Locate all instances that are tagged to start or stop.
     for instance in instances:
-        print(instance)
+        print(f'Instance: {instance.id}')
+        
         period = []
         i = 0
         j = 0
+        scheduled = 'Inactive'
+
         for tag in instance.tags:
-
-            if 'Period' in tag['Key']:
-                period.append(tag['Key'].split('-')[1])
-
-                i = i+1
+            if 'Scheduled' in tag['Key']:
+                scheduled = tag['Value']
         
-        while j < i:
-            
-            for tag in instance.tags:
-                
-                # Get Period tag value
-                if tag['Key'] == 'Period-' + str(period[j]):
-                    numPeriod = tag['Value']       
-                    print(f'Period: {numPeriod}')
-                    day = numPeriod.split('-')
-                    print(f'Days: {day}')
-   
+        print(f'Scheduled: {scheduled}')
 
+        if scheduled == 'Active':
+        
+            # Get all Period tag keys (e.g. Period-1, Period-2, ...)
             for tag in instance.tags:
-                
+                if 'Period' in tag['Key']:
+                    period.append(tag['Key'].split('-')[1])
+                    i = i+1
+            
+            # Get all Period tag values (e.g. Sunday-Saturday, Monday-Friday, ...)
+            while j < i:
+                for tag in instance.tags:
+                    if tag['Key'] == 'Period-' + str(period[j]):
+                        numPeriod = tag['Value']       
+                        print(f'Period: {numPeriod}')
+                        day = numPeriod.split('-')
+                        print(f'Days: {day}')
+    
                 # Add instance in array to stop
-                if tag['Key'] == 'ScheduleStop-' + str(period[j]):
-                    
-                    if len(day) > 1:
-                        # Check if the current day is within the period
-                        try:
-                            if DAYS.index(current_day, DAYS.index(day[0]), DAYS.index(day[1]) + 1):
-                                print(f'{current_day} is on Stop period-{period[j]}')
-                                
+                for tag in instance.tags:
+                    if tag['Key'] == 'ScheduleStop-' + str(period[j]):
+
+                        # Checks if the period has a range of days
+                        if len(day) > 1:
+
+                            # Check if the current day is within the period
+                                if DAYS.index(current_day) in range(DAYS.index(day[0]), DAYS.index(day[1])):
+                                    print(f'{current_day} is on Stop Period-{period[j]}')
+                                    
+                                    if tag['Value'] == current_time_local:
+                                        print(f'{instance.id} is on the Stop time')
+                                        stopInstances.append(instance.id)
+                                        
+                                else:
+                                    print(f'{current_day} is not on Stop Period-{period[j]}')
+                        else:
+
+                            # Checks if the period has a sigle day
+                            if current_day == day[0]:
                                 if tag['Value'] == current_time_local:
-                                    print(f'{instance.id} is on the time')
+                                    print(f'{instance.id} is on the Stop time')
                                     stopInstances.append(instance.id)
-                                    
-                        except ValueError:
-                            print(f'{current_day} is not on Stop period-{period[j]}')
-                    else:
-                        if current_day == day[0]:
-                            if tag['Value'] == current_time_local:
-                                print(f'{instance.id} is on the time')
-                                stopInstances.append(instance.id)
-    
-            for tag in instance.tags:
-                
+        
                 # Add instance in array to start
-                if tag['Key'] == 'ScheduleStart-' + str(period[j]):
-                        
-                    if len(day) > 1:
-                        # Check if the current day is within the period
-                        try:
-                            if DAYS.index(current_day, DAYS.index(day[0]), DAYS.index(day[1]) + 1):
-                                print(f'{current_day} is on Start period-{period[j]}')
+                for tag in instance.tags:
+
+                    if tag['Key'] == 'ScheduleStart-' + str(period[j]):
+
+                        # Checks if the period has a range of days  
+                        if len(day) > 1:
+
+                            # Check if the current day is within the period  
+                            if DAYS.index(current_day) in range(DAYS.index(day[0]), DAYS.index(day[1])):
+                                print(f'{current_day} is on Start Period-{period[j]}')
                                 
                                 if tag['Value'] == current_time_local:
-                                    print(f'{instance.id} is on the time')
+                                    print(f'{instance.id} is on the Start time')
                                     startInstances.append(instance.id)
-                                    
-                        except ValueError:
-                            print(f'{current_day} is not on Start period-{period[j]}')
-                    else:
-                        if current_day == day[0]:
-                            if tag['Value'] == current_time_local:
-                                print(f'{instance.id} is on the time')
-                                startInstances.append(instance.id)
-    
-            j = j+1
+                                        
+                            else:
+                                print(f'{current_day} is not on Start Period-{period[j]}')
+                        else:
+
+                            # Checks if the period has a sigle day
+                            if current_day == day[0]:
+                                if tag['Value'] == current_time_local:
+                                    print(f'{instance.id} is on the Start time')
+                                    startInstances.append(instance.id)
+                j = j+1
             
     # shut down all instances tagged to stop. 
     if len(stopInstances) > 0:
