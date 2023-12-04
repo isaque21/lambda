@@ -88,7 +88,7 @@ def lambda_handler(event, context):
                                 if len(day) > 1:
                                     
                                     # Check if the current day is within the period
-                                    if DAYS.index(current_day) in range(DAYS.index(day[0]), DAYS.index(day[1])):
+                                    if DAYS.index(current_day) in range(DAYS.index(day[0]), DAYS.index(day[1]) + 1):
                                         print(f'{current_day} is on Stop Period-{period[j]}')
                                         
                                         if tag['Value'] == current_time_local:
@@ -122,7 +122,7 @@ def lambda_handler(event, context):
                                     
                                 if len(day) > 1:
                                     # Check if the current day is within the period
-                                    if DAYS.index(current_day) in range(DAYS.index(day[0]), DAYS.index(day[1])):
+                                    if DAYS.index(current_day) in range(DAYS.index(day[0]), DAYS.index(day[1]) + 1):
                                         print(f'{current_day} is on Start Period-{period[j]}')
                                         
                                         if tag['Value'] == current_time_local:
