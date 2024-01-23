@@ -1,6 +1,7 @@
 # Start/Stop EC2 periodically
 
 This function allows you to create startup/stop routines for EC2 Instances on different days and times.
+For full instructions, visit the post [here](https://dev.to/isaque21/implantar-rotinas-periodicas-de-startstop-em-instancias-ec2-via-lambda-4bbn).
 
 # Prerequisites
 
@@ -24,6 +25,22 @@ A privileged IAM role will be required to start and stop EC2 Instances. An examp
 - The value of 'ScheduleStop' or 'ScheduleStart' must be in the following format 'H:M' - example '09:00'
 - To trigger this function, be sure to configure the CloudWatch event that will run at an interval of your choice (every 5 minutes is recommended).
 - The following Lambda function needs a role with permission to start and stop EC2 instances and write to CloudWatch logs.
+
+## Enviroment variables
+
+The code makes use of two environment variables:
+
+### ALARMS_MANAGER
+
+Defines whether CloudWatch alarms for instances will be enabled/disabled along with the start/stop action.
+
+The key value True defines that the function will change the status of alarms. If you do not want to change the status of the alarms, change the value to False.
+
+### REGIONS
+
+Defines the regions that the function will traverse and list instances.
+
+The value should be as a comma-separated list of AWS regions (for example: us-east-1,sa-east-1).
 
 ## IMPORTANT!!!
 
