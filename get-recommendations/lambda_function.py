@@ -194,21 +194,20 @@ def get_recommendations(arn, account, instance_id, platform, region):
         fiding = response['instanceRecommendations'][0]['finding']
         oldType = response['instanceRecommendations'][0]['currentInstanceType']
         
-        print(response['instanceRecommendations'][0]['utilizationMetrics'])
-        
         for oldMetric in response['instanceRecommendations'][0]['utilizationMetrics']:
             if oldMetric['name'] == 'CPU' and oldMetric['statistic'] == 'MAXIMUM':
                 oldVcpuUtilization = str(round(oldMetric['value'], 2)) + ' %'
             elif oldMetric['name'] == 'MEMORY' and oldMetric['statistic'] == 'MAXIMUM':
                 oldMemoryUtilization = str(round(oldMetric['value'], 2)) + ' %'
         
-        futureType = response['instanceRecommendations'][0]['recommendationOptions'][0]['instanceType']
+        if response['instanceRecommendations'][0]['recommendationOptions']:
+            futureType = response['instanceRecommendations'][0]['recommendationOptions'][0]['instanceType']
         
-        for metric in response['instanceRecommendations'][0]['recommendationOptions'][0]['projectedUtilizationMetrics']:
-            if metric['name'] == 'CPU':
-                futureVcpuUtilization = str(round(metric['value'], 2)) + ' %'
-            elif metric['name'] == 'MEMORY':
-                futureMemoryUtilization = str(round(metric['value'], 2)) + ' %'
+            for metric in response['instanceRecommendations'][0]['recommendationOptions'][0]['projectedUtilizationMetrics']:
+                if metric['name'] == 'CPU':
+                    futureVcpuUtilization = str(round(metric['value'], 2)) + ' %'
+                elif metric['name'] == 'MEMORY':
+                    futureMemoryUtilization = str(round(metric['value'], 2)) + ' %'
 
     recommendations = [instance_id,platform,oldType,oldMemoryUtilization,oldVcpuUtilization,fiding,futureType,futureMemoryUtilization,futureVcpuUtilization]
     
