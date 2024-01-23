@@ -168,7 +168,7 @@ def get_price(region, typeEc2, operatingSystem, preInstalledSw):
 
 def send_to_bucket(data):
     
-    headers = ['Account', 'Region', 'Instance_Name', 'Instance_ID', 'Plataform', 'Type', 'Memory', 'vCPU', 'OnDemand_Monthly', 'No_Upfront_Monthly_1yr', 'Partial_Upfront_Initial_1yr', 'Partial_Upfront_Monthly_1yr', 'All_Upfront_1yr', 'No_Upfront_Monthly_3yr', 'Partial_Upfront_Initial_3yr', 'Partial_Upfront_Monthly_3yr', 'All_Upfront_3yr']
+    headers = ['Account', 'Region', 'Instance_Name', 'Instance_ID', 'Plataform', 'State', 'Type', 'Memory', 'vCPU', 'OnDemand_Monthly', 'No_Upfront_Monthly_1yr', 'Partial_Upfront_Initial_1yr', 'Partial_Upfront_Monthly_1yr', 'All_Upfront_1yr', 'No_Upfront_Monthly_3yr', 'Partial_Upfront_Initial_3yr', 'Partial_Upfront_Monthly_3yr', 'All_Upfront_3yr']
     row = data
 
     csv_buffer = io.StringIO()
@@ -227,6 +227,7 @@ def lambda_handler(event, context):
     
                     ec2Id = ec2_instance['InstanceId']      
                     ec2Platform = ec2_instance['PlatformDetails']
+                    ec2State = ec2_instance['State']['Name']
                     ec2Type = ec2_instance['InstanceType']
                 
                     # Describe the instance types to get additional information
@@ -273,7 +274,7 @@ def lambda_handler(event, context):
                     priceOnDemand, noUpfront1yr, partUpfront1yr, partHrsUpfront1yr, allUpfront1yr, noUpfront3yr, partUpfront3yr, partHrsUpfront3yr, allUpfront3yr = get_price(location, ec2Type, platform, preInstalledSw)
 
                     # Add informations to array data
-                    listArr = [ec2Owner,ec2Az,ec2Name,ec2Id,ec2Platform,ec2Type,ec2Memory,ec2Vcpu,priceOnDemand,noUpfront1yr,partUpfront1yr,partHrsUpfront1yr,allUpfront1yr,noUpfront3yr,partUpfront3yr,partHrsUpfront3yr,allUpfront3yr]
+                    listArr = [ec2Owner,ec2Az,ec2Name,ec2Id,ec2Platform,ec2State,ec2Type,ec2Memory,ec2Vcpu,priceOnDemand,noUpfront1yr,partUpfront1yr,partHrsUpfront1yr,allUpfront1yr,noUpfront3yr,partUpfront3yr,partHrsUpfront3yr,allUpfront3yr]
                     data.append(listArr) 
 
     # send csv files to S3
