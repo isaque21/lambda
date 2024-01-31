@@ -10,8 +10,6 @@ AWS_REGIONS = REGIONS.split(',')
 # Define Disable/Enable 
 ALARMS_MANAGER = os.environ['ALARMS_MANAGER']
 
-cloudwatch = boto3.client('cloudwatch')
-
 DAYS = [
     'Sunday',
     'Monday',
@@ -22,7 +20,7 @@ DAYS = [
     'Saturday'
 ]
 
-def manage_alarms(instanceId, action):
+def manage_alarms(instanceId, action, cloudwatch):
     
     # List metrics through the pagination interface
     paginator = cloudwatch.get_paginator('list_metrics')
@@ -77,8 +75,11 @@ def lambda_handler(event, context):
         stopInstances = []   
         startInstances = []
 
-        # Create an EC2 client for the region
+        # Define EC2 client connection
         ec2 = boto3.client('ec2', region_name=region)
+
+        # Define CloudWatch client connection
+        cloudwatch = boto3.client('cloudwatch', region_name=region)
 
         # Search all the instances which contains scheduled filter 
         reservations = ec2.describe_instances(Filters=filters)
@@ -191,7 +192,7 @@ def lambda_handler(event, context):
             
             if ALARMS_MANAGER:
                 for inst in stopInstances:
-                    manage_alarms(inst, 'disable')
+                    manage_alarms(inst, 'disable', cloudwatch)
         else:
             print(f'----------------------------------------')
             print(f'No instances to shutdown in {region}.')
@@ -209,7 +210,7 @@ def lambda_handler(event, context):
 
             if ALARMS_MANAGER:
                 for inst in startInstances:
-                        manage_alarms(inst, 'enable')
+                    manage_alarms(inst, 'enable', cloudwatch)
         else:
             print(f'----------------------------------------')
             print(f'No instances to start in {region}.')
