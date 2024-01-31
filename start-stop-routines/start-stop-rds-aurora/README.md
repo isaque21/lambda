@@ -1,14 +1,14 @@
-# Start/Stop RDS periodically and Enable/Disable CloudWatch alarms
+# Start/Stop Aurora RDS periodically and Enable/Disable CloudWatch alarms
 
-This function allows you to create startup/stop routines for RDS Instances on different days and times and enable/disable CloudWatch alarms corresponding to the Instance that suffered the action.
+This function allows you to create startup/stop routines for Aurora RDS clusters on different days and times and enable/disable CloudWatch alarms corresponding to the Instance that suffered the action.
 
 # Prerequisites
 
-A privileged IAM role will be required to start/stop RDS Instances and manage CloudWatch alarms. An example can be seen [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_examples_rds_region.html) and [here](https://docs.amazonaws.cn/en_us/AmazonCloudWatch/latest/monitoring/iam-identity-based-access-control-cw.html).
+A privileged IAM role will be required to start/stop Aurora RDS clusters and manage CloudWatch alarms. An example can be seen [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_examples_rds_region.html) and [here](https://docs.amazonaws.cn/en_us/AmazonCloudWatch/latest/monitoring/iam-identity-based-access-control-cw.html).
 
 # Instructions
 
-- First, you need to define the following tags with their keys and values on RDS instances:
+- First, you need to define the following tags with their keys and values on Aurora RDS clusters:
 
     - Scheduled       : Active
     - Period-1        : Monday-Friday
@@ -17,7 +17,7 @@ A privileged IAM role will be required to start/stop RDS Instances and manage Cl
 
 ##
 
-- The function will try to filter RDS instances that contain a tag called 'Scheduled' that is set to 'Active'.
+- The function will try to filter Aurora RDS clusters that contain a tag called 'Scheduled' that is set to 'Active'.
 - The function uses a period of days of the week to compare the 'Period' tag and check if the current day is within the period.
 - If this condition is met, the function will compare the current time (H:M) with a value of the additional tags that define the trigger 'ScheduleStop' or 'ScheduleStart'.
 - The 'Period' value must be in the following format 'Sunday-Saturday'
@@ -32,7 +32,7 @@ A privileged IAM role will be required to start/stop RDS Instances and manage Cl
 
 `current_time = datetime.now()-timedelta(hours=3)`
 
-## Examples of RDS instance tags
+## Examples of Aurora RDS clusters tags
 
     Scheduled       : Active
 
