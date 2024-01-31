@@ -25,6 +25,22 @@ A privileged IAM role will be required to start/stop Aurora RDS clusters and man
 - To trigger this function, be sure to configure the CloudWatch event that will run at an interval of your choice (every 5 minutes is recommended).
 - The following Lambda function needs a role with permission to start and stop RDS instances and write to CloudWatch logs.
 
+## Enviroment variables
+
+The code makes use of two environment variables:
+
+### ALARMS_MANAGER
+
+Defines whether CloudWatch alarms for instances will be enabled/disabled along with the start/stop action.
+
+The key value True defines that the function will change the status of alarms. If you do not want to change the status of the alarms, change the value to False.
+
+### REGIONS
+
+Defines the regions that the function will traverse and list instances.
+
+The value should be as a comma-separated list of AWS regions (for example: us-east-1,sa-east-1).
+
 ## IMPORTANT!!!
 
 - The period starts on Sunday and ends on Saturday.
