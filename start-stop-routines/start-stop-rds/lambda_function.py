@@ -1,3 +1,8 @@
+# Start/Stop RDS periodically and Enable/Disable CloudWatch alarms.
+
+# This function allows you to create startup/stop routines for RDS Instances on different days and 
+# times and enable/disable CloudWatch alarms corresponding to the Instance that suffered the action.
+
 import boto3
 import os
 from datetime import datetime, timedelta
@@ -21,7 +26,8 @@ DAYS = [
 ]
 
 def manage_alarms(list_alarms, instance_name, db_identifier, action, cloudwatch):
-
+    print(f'----------------------------------------')
+    print(f'Checking alarms for {instance_name}.')
     for alarms in list_alarms:
         for dimensions in alarms['Dimensions']:
 
@@ -83,7 +89,8 @@ def lambda_handler(event, context):
                 # The if condition below excludes read replicas.
                 if db_instance['DBInstanceIdentifier'] not in v_read_replica and len(db_instance['ReadReplicaDBInstanceIdentifiers']) == 0:
 
-                    print(f"Instance: {db_instance['DBInstanceIdentifier']}")
+                    print(f'----------------------------------------')
+                    print(f"Checking instance {db_instance['DBInstanceIdentifier']} in {region}.")
 
                     period = []
                     i = 0
@@ -114,7 +121,7 @@ def lambda_handler(event, context):
                                     numPeriod = tag['Value'].strip()       
                                     print(f'Period: {numPeriod}')
                                     day = numPeriod.split('-')
-                                    print(f'Days: {day}')
+                                    # print(f'Days: {day}')
                 
                             # Add instance in array to stop
                             for tag in tags:
@@ -133,7 +140,7 @@ def lambda_handler(event, context):
                                                 if db_instance['DBInstanceStatus'] == 'available':
                                                     stop_instances.append(db_instance['DBInstanceIdentifier'])
                                                 else:
-                                                    print(f'{db_instance["DBInstanceIdentifier"]} state is: {db_instance["DBInstanceStatus"]}')
+                                                    print(f'The {db_instance["DBInstanceIdentifier"]} was not added to the stop list because its state is: {db_instance["DBInstanceStatus"]}.')
                                                     
                                         else:
                                             print(f'{current_day} is not on Stop Period-{period[j]}')
@@ -147,7 +154,7 @@ def lambda_handler(event, context):
                                                     if db_instance['DBInstanceStatus'] == 'available':
                                                         stop_instances.append(db_instance['DBInstanceIdentifier'])
                                                     else:
-                                                        print(f'{db_instance["DBInstanceIdentifier"]} state is: {db_instance["DBInstanceStatus"]}')
+                                                        print(f'The {db_instance["DBInstanceIdentifier"]} was not added to the stop list because its state is: {db_instance["DBInstanceStatus"]}.')
                                                         
                                         else:
                                             print(f'{current_day} is not on Stop Period-{period[j]}')
@@ -167,7 +174,7 @@ def lambda_handler(event, context):
                                                 if db_instance['DBInstanceStatus'] == 'stopped':
                                                     start_instances.append(db_instance['DBInstanceIdentifier'])
                                                 else:
-                                                    print(f'{db_instance["DBInstanceIdentifier"]} state is: {db_instance["DBInstanceStatus"]}')
+                                                    print(f'The {db_instance["DBInstanceIdentifier"]} was not added to the start list because its state is: {db_instance["DBInstanceStatus"]}.')
                                         else:        
                                             print(f'{current_day} is not on Start Period-{period[j]}')
                                     else:
@@ -179,7 +186,7 @@ def lambda_handler(event, context):
                                                 if db_instance['DBInstanceStatus'] == 'stopped':
                                                     start_instances.append(db_instance['DBInstanceIdentifier'])
                                                 else:
-                                                    print(f'{db_instance["DBInstanceIdentifier"]} state is: {db_instance["DBInstanceStatus"]}')
+                                                    print(f'The {db_instance["DBInstanceIdentifier"]} was not added to the start list because its state is: {db_instance["DBInstanceStatus"]}')
                                         else:        
                                             print(f'{current_day} is not on Start Period-{period[j]}')
                             j = j+1
@@ -188,13 +195,14 @@ def lambda_handler(event, context):
         if len(stop_instances) > 0:
             print(f'----------------------------------------')
             for stop_instance in stop_instances:
+                if ALARMS_MANAGER == 'True':
+                    manage_alarms(alarms, stop_instance, 'DBInstanceIdentifier', 'disable', cloudwatch)
                 try:
                     action = rds.stop_db_instance(DBInstanceIdentifier=stop_instance)
                     print(f'Stopping instance: {stop_instance}')
+                    print(action)
                 except Exception as e:
                     print (f'[Cannot stop instance {stop_instance}] {e}')
-
-                manage_alarms(alarms, stop_instance, 'DBInstanceIdentifier', 'disable', cloudwatch)
         else:
             print(f'----------------------------------------')
             print(f'No instances to stop in {region}.')
@@ -203,13 +211,14 @@ def lambda_handler(event, context):
         if len(start_instances) > 0:
             print(f'----------------------------------------')
             for start_instance in start_instances:
+                if ALARMS_MANAGER == 'True':
+                    manage_alarms(alarms, start_instance, 'DBInstanceIdentifier', 'enable', cloudwatch)
                 try:
                     action = rds.start_db_instance(DBInstanceIdentifier=start_instance)
                     print(f'Starting instance: {start_instance}')
+                    print(action)
                 except Exception as e:
                     print (f'[Cannot start instance {start_instance}] {e}')
-
-                manage_alarms(alarms, start_instance, 'DBInstanceIdentifier', 'enable', cloudwatch)
         else:
             print(f'----------------------------------------')
             print(f'No instances to start in {region}.')

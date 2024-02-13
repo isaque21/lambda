@@ -1,3 +1,8 @@
+# Start/Stop Aurora RDS periodically and Enable/Disable CloudWatch alarms.
+
+# This function allows you to create startup/stop routines for Aurora RDS clusters on different days and
+# times and enable/disable CloudWatch alarms corresponding to the Instance that suffered the action.
+
 import boto3
 import os
 from datetime import datetime, timedelta
@@ -21,7 +26,8 @@ DAYS = [
 ]
 
 def manage_alarms(list_alarms, cluster_name, db_identifier, action, cloudwatch):
-    
+    print(f'----------------------------------------')
+    print(f'Checking alarms for {cluster_name}.')
     for alarms in list_alarms:
         for dimensions in alarms['Dimensions']:
 
@@ -33,6 +39,7 @@ def manage_alarms(list_alarms, cluster_name, db_identifier, action, cloudwatch):
                 elif action == 'enable':
                     cloudwatch.enable_alarm_actions(AlarmNames=[alarms['AlarmName']])
                     print(f'Alarm {alarms['AlarmName']} is enabled!')
+    print(f'----------------------------------------')
 
 def lambda_handler(event, context):
 
@@ -74,8 +81,8 @@ def lambda_handler(event, context):
 
         # Traverses all RDS instances
         for db_cluster in db_clusters:
-
-            print(f"Instance: {db_cluster['DBClusterIdentifier']}")
+            print(f'----------------------------------------')
+            print(f"Checking cluster {db_cluster['DBClusterIdentifier']} in {region}.")
 
             period = []
             i = 0
@@ -106,7 +113,7 @@ def lambda_handler(event, context):
                             numPeriod = tag['Value'].strip()       
                             print(f'Period: {numPeriod}')
                             day = numPeriod.split('-')
-                            print(f'Days: {day}')
+                            # print(f'Days: {day}')
         
                     # Add instance in array to stop
                     for tag in tags:
@@ -130,10 +137,9 @@ def lambda_handler(event, context):
                                             # Add instances to list of alarms manager
                                             if len(db_cluster['DBClusterMembers']) > 0:
                                                 for db_instance in db_cluster['DBClusterMembers']:
-                                                    print(f'DB_Instance: {db_instance['DBInstanceIdentifier']}')
                                                     stop_alarms_instances.append(db_instance['DBInstanceIdentifier'])
                                         else:
-                                            print(f'{db_cluster["DBClusterIdentifier"]} state is: {db_cluster["Status"]}')
+                                            print(f'The {db_cluster["DBClusterIdentifier"]} was not added to the stop function because its state is: {db_cluster["Status"]}.')
                                             
                                 else:
                                     print(f'{current_day} is not on Stop Period-{period[j]}')
@@ -152,10 +158,9 @@ def lambda_handler(event, context):
                                                 # Add instances to list of alarms manager
                                                 if len(db_cluster['DBClusterMembers']) > 0:
                                                     for db_instance in db_cluster['DBClusterMembers']:
-                                                        print(f'DB_Instance: {db_instance['DBInstanceIdentifier']}')
                                                         stop_alarms_instances.append(db_instance['DBInstanceIdentifier'])
                                             else:
-                                                print(f'{db_cluster["DBClusterIdentifier"]} state is: {db_cluster["Status"]}')
+                                                print(f'The {db_cluster["DBClusterIdentifier"]}  was not added to the stop function because its state is: {db_cluster["Status"]}.')
                                                 
                                 else:
                                     print(f'{current_day} is not on Stop Period-{period[j]}')
@@ -180,10 +185,9 @@ def lambda_handler(event, context):
                                             # Add instances to list of alarms manager
                                             if len(db_cluster['DBClusterMembers']) > 0:
                                                 for db_instance in db_cluster['DBClusterMembers']:
-                                                    print(f'DB_Instance: {db_instance['DBInstanceIdentifier']}')
                                                     start_alarms_instances.append(db_instance['DBInstanceIdentifier'])
                                         else:
-                                            print(f'{db_cluster["DBClusterIdentifier"]} state is: {db_cluster["Status"]}')
+                                            print(f"The {db_cluster['DBClusterIdentifier']} was not added to the start function because its state is: {db_cluster['Status']}.")
                                 else:        
                                     print(f'{current_day} is not on Start Period-{period[j]}')
                             else:
@@ -191,7 +195,7 @@ def lambda_handler(event, context):
                                 # Checks if the period has a sigle day
                                 if current_day == day[0]:
                                     if tag['Value'] == current_time_local:
-                                        print(f'{db_cluster["DBClusterIdentifier"]} is on the Start time')
+                                        print(f"{db_cluster['DBClusterIdentifier']} is on the Start time")
                                         if db_cluster['Status'] == 'stopped':
                                             
                                             # Add cluster to start list
@@ -200,10 +204,9 @@ def lambda_handler(event, context):
                                             # Add instances to list of alarms manager
                                             if len(db_cluster['DBClusterMembers']) > 0:
                                                 for db_instance in db_cluster['DBClusterMembers']:
-                                                    print(f'DB_Instance: {db_instance['DBInstanceIdentifier']}')
                                                     start_alarms_instances.append(db_instance['DBInstanceIdentifier'])
                                         else:
-                                            print(f'{db_cluster["DBClusterIdentifier"]} state is: {db_cluster["Status"]}')
+                                            print(f"The {db_cluster['DBClusterIdentifier']} was not added to the start function because its state is: {db_cluster['Status']}.")
                                 else:        
                                     print(f'{current_day} is not on Start Period-{period[j]}')
                     j = j+1
@@ -212,41 +215,39 @@ def lambda_handler(event, context):
         if len(stop_clusters) > 0:
             print(f'----------------------------------------')
             for stop_cluster in stop_clusters:
-                                
-                if len(stop_alarms_instances) > 0:
-                    for stop_alarms_instance in stop_alarms_instances:
-                        manage_alarms(alarms, stop_alarms_instance, 'DBInstanceIdentifier', 'disable', cloudwatch)
+                if ALARMS_MANAGER == 'True':
+                    manage_alarms(alarms, stop_cluster, 'DBClusterIdentifier', 'disable', cloudwatch)                
+                    if len(stop_alarms_instances) > 0:
+                        for stop_alarms_instance in stop_alarms_instances:
+                            manage_alarms(alarms, stop_alarms_instance, 'DBInstanceIdentifier', 'disable', cloudwatch)
                 try:
                     action = rds.stop_db_cluster(DBClusterIdentifier=stop_cluster)
-                    print(f'Stopping instance: {stop_cluster}')
+                    print(f'Stopping instance {stop_cluster} in {region}.')
+                    print(action)
                 except Exception as e:
-                    print (f'[Cannot stop cluster {stop_cluster}] {e}')
-
-                manage_alarms(alarms, stop_cluster, 'DBClusterIdentifier', 'disable', cloudwatch)
-                    
+                    print (f'[Cannot stop cluster {stop_cluster} in {region}] {e}')     
         else:
             print(f'----------------------------------------')
-            print("No instances to stop.")
+            print(f'No instances to stop in {region}.')
             
         # Start instances tagged to start. 
         if len(start_clusters) > 0:
             print(f'----------------------------------------')
             for start_cluster in start_clusters:
-                                
-                if len(start_alarms_instances) > 0:
-                    for start_alarms_instance in start_alarms_instances:
-                        manage_alarms(alarms, start_alarms_instance, 'DBInstanceIdentifier', 'enable', cloudwatch)
+                if ALARMS_MANAGER == 'True':
+                    manage_alarms(alarms, start_cluster, 'DBClusterIdentifier', 'enable', cloudwatch)                
+                    if len(start_alarms_instances) > 0:
+                        for start_alarms_instance in start_alarms_instances:
+                            manage_alarms(alarms, start_alarms_instance, 'DBInstanceIdentifier', 'enable', cloudwatch)
                 try:
                     action = rds.start_db_cluster(DBClusterIdentifier=start_cluster)
-                    print(f'Starting instance: {start_cluster}')
+                    print(f'Starting instance: {start_cluster} in {region}.')
+                    print(action)
                 except Exception as e:
-                    print (f'[Cannot start cluster {start_cluster}] {e}')
-
-                manage_alarms(alarms, start_cluster, 'DBClusterIdentifier', 'enable', cloudwatch)
-            
+                    print (f'[Cannot start cluster {start_cluster} in {region}] {e}')
         else:
             print(f'----------------------------------------')
-            print("No instances to start.")
+            print(f'No instances to start in {region}.')
 
     print(f'----------------------------------------')
     
